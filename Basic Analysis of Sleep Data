@@ -1,0 +1,53 @@
+library(ggetho)
+
+#Continue from the loaded and cleaned data (dt_curated)
+
+#Visualize sleep for each fly in tile plot 
+ggetho(dt_curated, aes(z=asleep)) +     stat_tile_etho() +     stat_ld_annotations()
+
+#wrap sleep data for each genotype 
+ggetho(dt_curated, aes(y=asleep, colour=Genotype)) +
+      stat_pop_etho() +
+      stat_ld_annotations()+
+      scale_y_continuous(name= "Fraction of time sleeping",labels = scales::percent)+
+      theme_classic()
+
+#wrap sleep data for each genotype for 24 hours
+ggetho(dt_curated, aes(y=asleep, colour=Genotype), time_wrap=hours(24)) +
+      stat_pop_etho() +
+      stat_ld_annotations()+
+      scale_y_continuous(name= "Fraction of time sleeping",labels = scales::percent)+
+      theme_classic()
+      
+ #Analyze fraction of sleep for day and night 
+ 
+ #first classify data into day and night 
+ dt_curated[, phase := ifelse(t %% hours(24) < hours(12), "L", "D")]
+ 
+ #Find mean sleep for each time cycle 
+ summary_dt <- 
+  rejoin(dt_curated[,
+           .(
+             # this is where the computation happens
+             sleep_fraction_all = mean(asleep),
+             sleep_fraction_l = mean(asleep[phase == "L"]),
+             sleep_fraction_d = mean(asleep[phase == "D"])
+             ),
+           ,by=id])
+           
+ #To visualize the summarized data for night, day, or all time 
+ #use sleep_fractio_l and sleep_fraction_all for the other cycles in y 
+ ggplot(summary_dt, aes(x=Genotype, y=sleep_fraction_d, fill=Genotype)) + 
+  geom_boxplot(outlier.colour = NA) +
+  geom_jitter(alpha=.5) +
+  scale_y_continuous(name= "Fraction of time sleeping",labels = scales::percent)
+  
+  #to combine all cycle
+  summary_dt_melted <- melt(summary_dt, measure.vars = patterns("sleep_fraction_"),
+                          variable.name = "phase", value.name = "sleep_fraction")
+                          
+                         
+  ggplot(summary_dt_melted, aes(x=phase, y=sleep_fraction, fill=Genotype)) + 
+  geom_boxplot(outlier.colour = NA) +
+  scale_y_continuous(name= "Fraction of time sleeping",labels = scales::percent)  
+  
