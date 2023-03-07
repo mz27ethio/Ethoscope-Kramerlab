@@ -1,0 +1,33 @@
+#Continue from the curated data (dt_curated)
+library(sleepr)
+
+
+bout_dt <- bout_analysis(asleep, dt_curated)
+
+bout_dt <- bout_dt[asleep == TRUE, -"asleep"]
+
+bout_dt[, phase := ifelse(t %% hours(24) < hours(12), "L", "D")]
+bout_dt_l <- bout_dt[phase=="L"]
+bout_dt_D <- bout_dt[phase=="D"]
+
+
+bout_summary_l <- rejoin(bout_dt_l[,.(
+    Total_bout_light=(sum(duration))/(60*3),   #minutes per day, 3 days total 
+    n_bouts_light = (.N)/(3),                    #per day 3 days total
+    mean_bout_length_light = mean(duration)/60   #minutes
+),
+by=id])
+
+bout_summary_D <- rejoin(bout_dt_D[,.(
+    Total_bout_dark=(sum(duration))/(60*3),
+    n_bouts_dark = (.N)/(3),
+    mean_bout_length_dark = mean(duration)/60
+),
+by=id])
+
+bout_summary_total <- rejoin(bout_dt[,.(
+    Total_bout_total=(sum(duration))/(60*3),
+    n_bouts_total = (.N)/(3),
+    mean_bout_length_total = mean(duration)/60
+),
+by=id])
