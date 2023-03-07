@@ -1,0 +1,48 @@
+library(scopr)
+library(sleepr)
+
+#Point to the directory housing the data 
+DATA_DIR <- "D:/"
+#to make sure the validity of the directory 
+list.files(DATA_DIR)
+setwd(DATA_DIR)
+
+#load metadata
+metadata <- fread("metadata.csv")
+
+
+#the date column in the metadata should be set as characters
+#Make sure first that the date is formated as YYYY-MM-DD
+
+# To check class
+class(metadata$date)
+#to change to character 
+metadata$date <- as.character(metadata$date)
+class(metadata$date)
+
+
+#to load the data (Night time starts at 8PM Central time +6 is 14 in GMT)
+system.time(
+dt <- load_ethoscope(metadata,
+reference_hour=14.0, 
+FUN = sleepr::sleep_annotation,
+cache = "ethoscope_cache",
+verbose=FALSE))
+
+#Visualize the raw data with tile plot 
+ggetho(dt, aes(z=asleep)) +     stat_tile_etho() +     stat_ld_annotations()
+
+#Trim the data into appropriate days (usually 3 days of data: from 1st to 4th day)
+dt2 <- dt[t %between% c(days(1), days(4))]
+
+#Curate dead flies (remove the flies that die early)
+dt_curated <- curate_dead_animals(dt2)
+
+#Further curation 
+lifespan_dt <- dt_curated[, .(lifespan = max(t)), by=id]
+#remove flies that died late 
+valid_ids <- lifespan_dt[lifespan > days(3.75), id]
+
+dt_curated <- dt_curated[id %in% valid_ids]
+
+
