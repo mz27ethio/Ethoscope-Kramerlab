@@ -1,14 +1,15 @@
 #Continue from the bout analysis 
 # Zt_12 is the latency to sleep (time taken to sleep after light is turned off)
-# A bit long process that can be shortened in the future 
+# A long code that can be shortened in the future, nevertheless, it's effective.
 
-#Create a coloumn time is shouwn in hour 
+
+#Create a coloumn that shows time in hour
 bout_dt[, t_hr := t/3600 ]
 
 #Since the experiment was trimmed to be within the 1st to the 4th day (total of three days), 
 #Zt_12 is observed around the 36th, 60th, and 84th hour. 
 
-#make a new column 
+#make a new column (findng the time gap to the first sleep)
 bout_dt[, Z_36 := t_hr-36]
 bout_dt[, Z_60 := t_hr-60]
 bout_dt[, Z_84 := t_hr-84]
